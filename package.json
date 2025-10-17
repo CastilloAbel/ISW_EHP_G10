@@ -1,0 +1,19 @@
+{
+  "name": "ecoharmony-park",
+  "version": "1.0.0",
+  "description": "Sistema de inscripción para EcoHarmony Park",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watchAll=false",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
