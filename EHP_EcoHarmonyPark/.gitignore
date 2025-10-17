@@ -1,0 +1,7 @@
+﻿node_modules/
+dist/
+.vite/
+.env
+.env.*
+EHP_database.db
+coverage/
