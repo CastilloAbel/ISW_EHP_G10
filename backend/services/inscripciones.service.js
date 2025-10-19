@@ -11,7 +11,7 @@ class InscripcionesService {
    * Valida los datos de la inscripción
    */
   validateInscripcion(data) {
-    const { actividad, horarioId, participantes, terminosAceptados } = data;
+    const { horarioId, participantes, terminosAceptados } = data;
 
     if (!terminosAceptados) {
       throw { status: 400, message: 'Debe aceptar términos y condiciones' };
@@ -21,8 +21,8 @@ class InscripcionesService {
       throw { status: 400, message: 'Debe incluir al menos un participante' };
     }
 
-    if (!actividad || !horarioId) {
-      throw { status: 400, message: 'Actividad y horario son requeridos' };
+    if (!horarioId) {
+      throw { status: 400, message: 'Horario es requerido' };
     }
   }
 
@@ -61,13 +61,13 @@ class InscripcionesService {
    * Crea una nueva inscripción
    */
   async crearInscripcion(data) {
-    const { actividad, horarioId, participantes, terminosAceptados } = data;
+    const { horarioId, participantes, terminosAceptados } = data;
 
     // Validar datos básicos
     this.validateInscripcion(data);
 
     // Verificar que el horario existe y está disponible
-    const horario = await actividadRepository.findHorarioByIdAndNombre(horarioId, actividad);
+    const horario = await actividadRepository.findHorarioById(horarioId);
 
     if (!horario) {
       throw { status: 404, message: 'Horario no disponible' };
@@ -96,8 +96,9 @@ class InscripcionesService {
         // Insertar inscripción
         const inscripcionResult = await inscripcionRepository.create(db, {
           id_visitante: visitanteResult.lastID,
-          id_actividad: horarioId,
-          terminos_condicion: terminosAceptados
+          id_horario: horarioId,
+          terminos_condicion: terminosAceptados,
+          cantidad_personas: 1
         });
 
         inscripcionIds.push(inscripcionResult.lastID);
@@ -110,7 +111,7 @@ class InscripcionesService {
       await this.commitTransaction(db);
 
       // Generar código de reserva
-      const codigoReserva = this.generarCodigoReserva(actividad, horarioId, inscripcionIds[0]);
+      const codigoReserva = this.generarCodigoReserva(horario.actividad_nombre, horarioId, inscripcionIds[0]);
 
       db.close();
 
