@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Trees, Sparkles } from "lucide-react";
+
 import EnrollmentForm from "./components/EnrollmentForm";
 import SuccessModal from "./components/SuccessModal";
 
@@ -47,16 +48,13 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
       {/* Header */}
       <motion.header
-        className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-xl"
-        variants={headerVariants}
-        initial="hidden"
         animate="visible"
+        className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-xl"
+        initial="hidden"
+        variants={headerVariants}
       >
         <div className="container mx-auto px-4 py-8">
-          <motion.div
-            className="text-center"
-            variants={titleVariants}
-          >
+          <motion.div className="text-center" variants={titleVariants}>
             <div className="flex items-center justify-center gap-3 mb-2">
               <motion.div
                 animate={{
@@ -90,9 +88,9 @@ function App() {
               </motion.div>
             </div>
             <motion.p
+              animate={{ opacity: 1 }}
               className="text-xl text-green-100"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
               Tu aventura comienza aquí
@@ -104,8 +102,8 @@ function App() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 30 }}
           transition={{ delay: 0.3, duration: 0.6 }}
         >
           <section className="text-center mb-12">
@@ -128,9 +126,9 @@ function App() {
 
       {/* Footer */}
       <motion.footer
+        animate={{ opacity: 1 }}
         className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-6 mt-16"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
       >
         <div className="container mx-auto px-4 text-center">
@@ -143,10 +141,7 @@ function App() {
 
       {/* Success Modal */}
       {showSuccess && (
-        <SuccessModal
-          code={reservationCode}
-          onClose={handleCloseModal}
-        />
+        <SuccessModal code={reservationCode} onClose={handleCloseModal} />
       )}
     </div>
   );

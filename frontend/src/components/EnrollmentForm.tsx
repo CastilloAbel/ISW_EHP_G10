@@ -33,6 +33,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [hasReadTerms, setHasReadTerms] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     actividad: '',
@@ -404,6 +405,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
                   classNames={{
                     wrapper: "group-hover:bg-primary/20 mt-0.5",
                   }}
+                  isDisabled={!hasReadTerms}
                 />
                 <span className="text-sm pt-0.5">
                   Acepto los{' '}
@@ -445,7 +447,10 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
 
       <TermsModal
         isOpen={termsModalOpen}
-        onClose={() => setTermsModalOpen(false)}
+        onClose={() => {
+          setTermsModalOpen(false);
+          setHasReadTerms(true);
+        }}
       />
     </>
   );

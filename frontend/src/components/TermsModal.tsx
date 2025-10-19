@@ -1,5 +1,13 @@
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from '@heroui/react';
-import { FileText } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "@heroui/react";
+import { CheckCircle2, ScrollText } from "lucide-react";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -7,158 +15,274 @@ interface TermsModalProps {
 }
 
 const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
+  const [hasReadAll, setHasReadAll] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Resetear el estado cuando se abre el modal
+    if (isOpen) {
+      setHasReadAll(false);
+    }
+  }, [isOpen]);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      // Verificar si el usuario ha llegado al final (con un margen de 5px)
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 5;
+
+      if (isAtBottom && !hasReadAll) {
+        setHasReadAll(true);
+      }
+    }
+  };
+
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="3xl"
-      scrollBehavior="inside"
       classNames={{
-        base: "max-h-[90vh]",
-        body: "py-6",
-        header: "border-b border-default-200",
-        footer: "border-t border-default-200",
+        backdrop:
+          "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
       }}
+      isOpen={isOpen}
+      scrollBehavior="inside"
+      size="2xl"
+      onClose={onClose}
     >
       <ModalContent>
-        <ModalHeader className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary" />
-          <span>Términos y Condiciones de la Actividad</span>
-        </ModalHeader>
-        <ModalBody>
-          <div className="space-y-4 text-default-700">
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                1. Aceptación de los Términos
-              </h3>
-              <p className="text-sm leading-relaxed">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-                irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-                pariatur.
-              </p>
-            </section>
+        {(onClose) => (
+          <>
+            <ModalHeader className="flex gap-2 items-center border-b">
+              <ScrollText className="w-5 h-5 text-primary" />
+              <span>Términos y Condiciones</span>
+            </ModalHeader>
+            <ModalBody className="py-6 max-h-[60vh] overflow-y-auto">
+              <div
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="space-y-4 text-sm overflow-y-auto max-h-full"
+              >
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    1. Lorem Ipsum Dolor Sit
+                  </h3>
+                  <p className="text-default-600">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
+                    do eiusmod tempor incididunt ut labore et dolore magna
+                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                  </p>
+                </section>
 
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                2. Requisitos de Participación
-              </h3>
-              <p className="text-sm leading-relaxed mb-2">
-                Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-                mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit
-                voluptatem accusantium doloremque laudantium, totam rem aperiam.
-              </p>
-              <ul className="list-disc list-inside text-sm space-y-1 pl-4">
-                <li>Eaque ipsa quae ab illo inventore veritatis et quasi architecto</li>
-                <li>Beatae vitae dicta sunt explicabo nemo enim ipsam</li>
-                <li>Voluptatem quia voluptas sit aspernatur aut odit aut fugit</li>
-                <li>Sed quia consequuntur magni dolores eos qui ratione</li>
-              </ul>
-            </section>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    2. Consectetur Adipiscing
+                  </h3>
+                  <p className="text-default-600 mb-2">
+                    Duis aute irure dolor in reprehenderit in voluptate velit
+                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+                    occaecat cupidatat:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-default-600 ml-4">
+                    <li>
+                      Sed ut perspiciatis unde omnis iste natus error sit
+                      voluptatem
+                    </li>
+                    <li>Accusantium doloremque laudantium totam rem aperiam</li>
+                    <li>
+                      Eaque ipsa quae ab illo inventore veritatis et quasi
+                      architecto
+                    </li>
+                    <li>Beatae vitae dicta sunt explicabo nemo enim ipsam</li>
+                    <li>
+                      Voluptatem quia voluptas sit aspernatur aut odit aut fugit
+                    </li>
+                  </ul>
+                </section>
 
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                3. Normas de Seguridad
-              </h3>
-              <p className="text-sm leading-relaxed">
-                Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
-                adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
-                dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum
-                exercitationem ullam corporis suscipit laboriosam.
-              </p>
-            </section>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    3. Quis Nostrud Exercitation
+                  </h3>
+                  <p className="text-default-600 mb-2">
+                    Sed quia consequuntur magni dolores eos qui ratione
+                    voluptatem sequi nesciunt:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-default-600 ml-4">
+                    <li>
+                      Neque porro quisquam est qui dolorem ipsum quia dolor sit
+                      amet
+                    </li>
+                    <li>
+                      Consectetur adipisci velit sed quia non numquam eius modi
+                    </li>
+                    <li>
+                      Tempora incidunt ut labore et dolore magnam aliquam
+                      quaerat
+                    </li>
+                    <li>
+                      Ut enim ad minima veniam quis nostrum exercitationem ullam
+                    </li>
+                    <li>
+                      Corporis suscipit laboriosam nisi ut aliquid ex ea commodi
+                    </li>
+                  </ul>
+                </section>
 
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                4. Política de Cancelación
-              </h3>
-              <p className="text-sm leading-relaxed">
-                Nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit
-                qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui
-                dolorem eum fugiat quo voluptas nulla pariatur. At vero eos et accusamus et iusto
-                odio dignissimos ducimus qui blanditiis praesentium.
-              </p>
-            </section>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    4. Excepteur Sint Occaecat
+                  </h3>
+                  <p className="text-default-600">
+                    At vero eos et accusamus et iusto odio dignissimos ducimus
+                    qui blanditiis praesentium voluptatum deleniti atque
+                    corrupti quos dolores et quas molestias excepturi sint
+                    occaecati cupiditate non provident similique sunt in culpa
+                    qui officia deserunt mollitia animi id est laborum et
+                    dolorum fuga.
+                  </p>
+                </section>
 
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                5. Responsabilidad y Riesgos
-              </h3>
-              <p className="text-sm leading-relaxed mb-2">
-                Voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint
-                occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt
-                mollitia animi, id est laborum et dolorum fuga.
-              </p>
-              <p className="text-sm leading-relaxed">
-                Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum
-                soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime
-                placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.
-              </p>
-            </section>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    5. Temporibus Autem Quibusdam
+                  </h3>
+                  <p className="text-default-600 mb-2">
+                    Et harum quidem rerum facilis est et expedita distinctio:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-default-600 ml-4">
+                    <li>
+                      Nam libero tempore cum soluta nobis est eligendi optio
+                    </li>
+                    <li>
+                      Cumque nihil impedit quo minus id quod maxime placeat
+                    </li>
+                    <li>
+                      Facere possimus omnis voluptas assumenda est omnis dolor
+                    </li>
+                    <li>
+                      Repellendus temporibus autem quibusdam et aut officiis
+                    </li>
+                    <li>
+                      Debitis aut rerum necessitatibus saepe eveniet ut et
+                    </li>
+                  </ul>
+                </section>
 
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                6. Uso de Equipamiento
-              </h3>
-              <p className="text-sm leading-relaxed">
-                Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe
-                eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque
-                earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus
-                maiores alias consequatur aut perferendis doloribus asperiores repellat.
-              </p>
-            </section>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    6. Itaque Earum Rerum
+                  </h3>
+                  <p className="text-default-600 mb-2">
+                    Hic tenetur a sapiente delectus ut aut reiciendis
+                    voluptatibus:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-default-600 ml-4">
+                    <li>
+                      Maiores alias consequatur aut perferendis doloribus
+                      asperiores
+                    </li>
+                    <li>
+                      Repellat hanc earum rerum hic tenetur a sapiente delectus
+                    </li>
+                    <li>
+                      Ut aut reiciendis voluptatibus maiores alias consequatur
+                    </li>
+                    <li>
+                      Aut perferendis doloribus asperiores repellat similique
+                    </li>
+                    <li>Sunt in culpa qui officia deserunt mollitia animi</li>
+                  </ul>
+                </section>
 
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                7. Protección de Datos Personales
-              </h3>
-              <p className="text-sm leading-relaxed">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices
-                gravida. Risus commodo viverra maecenas accumsan lacus vel facilisis. Consectetur
-                adipiscing elit duis tristique sollicitudin nibh sit amet commodo.
-              </p>
-            </section>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    7. Nemo Enim Ipsam
+                  </h3>
+                  <p className="text-default-600">
+                    Quis autem vel eum iure reprehenderit qui in ea voluptate
+                    velit esse quam nihil molestiae consequatur vel illum qui
+                    dolorem eum fugiat quo voluptas nulla pariatur. Temporibus
+                    autem quibusdam et aut officiis debitis aut rerum
+                    necessitatibus saepe eveniet ut et voluptates repudiandae
+                    sint et molestiae non recusandae.
+                  </p>
+                </section>
 
-            <section>
-              <h3 className="text-lg font-semibold text-default-900 mb-2">
-                8. Modificaciones a los Términos
-              </h3>
-              <p className="text-sm leading-relaxed">
-                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium
-                doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore
-                veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam
-                voluptatem quia voluptas sit aspernatur aut odit aut fugit.
-              </p>
-            </section>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    8. Voluptatem Accusantium
+                  </h3>
+                  <p className="text-default-600">
+                    Itaque earum rerum hic tenetur a sapiente delectus ut aut
+                    reiciendis voluptatibus maiores alias consequatur aut
+                    perferendis doloribus asperiores repellat. On the other hand
+                    we denounce with righteous indignation and dislike men who
+                    are so beguiled and demoralized by the charms of pleasure of
+                    the moment.
+                  </p>
+                </section>
 
-            <section className="bg-warning-50 border-l-4 border-warning-500 p-4 rounded-r">
-              <h3 className="text-lg font-semibold text-warning-900 mb-2">
-                Aviso Importante
-              </h3>
-              <p className="text-sm leading-relaxed text-warning-800">
-                Sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-                Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
-                adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et
-                dolore magnam aliquam quaerat voluptatem.
-              </p>
-            </section>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            color="primary"
-            onPress={onClose}
-            className="font-semibold"
-          >
-            Entendido
-          </Button>
-        </ModalFooter>
+                <section>
+                  <h3 className="font-semibold text-lg mb-2">
+                    9. Sed Ut Perspiciatis
+                  </h3>
+                  <p className="text-default-600">
+                    But I must explain to you how all this mistaken idea of
+                    denouncing pleasure and praising pain was born and I will
+                    give you a complete account of the system and expound the
+                    actual teachings of the great explorer of the truth, the
+                    master-builder of human happiness.
+                  </p>
+                </section>
+
+                <section className="pb-4">
+                  <h3 className="font-semibold text-lg mb-2">
+                    10. Finibus Bonorum et Malorum
+                  </h3>
+                  <p className="text-default-600">
+                    No one rejects, dislikes, or avoids pleasure itself because
+                    it is pleasure, but because those who do not know how to
+                    pursue pleasure rationally encounter consequences that are
+                    extremely painful. Nor again is there anyone who loves or
+                    pursues or desires to obtain pain of itself.
+                  </p>
+                </section>
+
+                {!hasReadAll && (
+                  <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pt-8 pb-4 text-center">
+                    <p className="text-primary font-semibold text-sm animate-pulse">
+                      ⬇ Por favor, desplácese hasta el final para continuar ⬇
+                    </p>
+                  </div>
+                )}
+              </div>
+            </ModalBody>
+            <ModalFooter className="border-t">
+              {hasReadAll ? (
+                <div className="flex items-center gap-2 text-success text-sm mr-auto">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Has leído todos los términos</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-warning text-sm mr-auto">
+                  <ScrollText className="w-4 h-4" />
+                  <span>Debes leer todo el contenido</span>
+                </div>
+              )}
+              <Button
+                color="primary"
+                isDisabled={!hasReadAll}
+                startContent={<CheckCircle2 className="w-4 h-4" />}
+                onPress={onClose}
+              >
+                Entendido
+              </Button>
+            </ModalFooter>
+          </>
+        )}
       </ModalContent>
     </Modal>
   );
 };
 
 export default TermsModal;
-
