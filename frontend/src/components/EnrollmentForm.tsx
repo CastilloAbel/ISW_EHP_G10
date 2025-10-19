@@ -1,12 +1,26 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Input, Select, SelectItem, Button, Card, CardBody, Checkbox } from '@heroui/react';
+import { Input, Select, SelectItem, Button, Card, CardBody, Checkbox, Avatar } from '@heroui/react';
 import { Calendar, Users, AlertCircle, CheckCircle2, User, CreditCard, Cake, Shirt } from 'lucide-react';
 import TermsModal from './TermsModal';
 
+// Importar las imágenes
+import safariImg from '../assets/zafari.png';
+import tirolesaImg from '../assets/tirolesa.png';
+import jardineriaImg from '../assets/jardineria.png';
+import palestraImg from '../assets/palestra.png';
+
 const API_URL = 'http://localhost:3000/api';
 
-const ACTIVIDADES_CON_TALLE = ['TIROLESA', 'PALESTRA'];
+// Función para obtener el avatar según el nombre de la actividad
+const getActivityAvatar = (activityName: string): string => {
+  const name = activityName.toLowerCase();
+  if (name.includes('safari') || name.includes('zafari')) return safariImg;
+  if (name.includes('tirolesa')) return tirolesaImg;
+  if (name.includes('jardiner')) return jardineriaImg;
+  if (name.includes('palestra')) return palestraImg;
+  return ''; // default
+};
 
 interface Participante {
   nombre: string;
@@ -15,7 +29,26 @@ interface Participante {
   talla: string;
 }
 
+interface TipoActividad {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+}
+
+interface Actividad {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  requiere_talla: number;
+  cupos: number;
+  tipo_id: number;
+  tipo_nombre: string;
+  tipo_codigo: string;
+}
+
 interface FormData {
+  tipoActividad: string;
   actividad: string;
   horarioId: string;
   cantidadPersonas: number;
@@ -28,7 +61,8 @@ interface EnrollmentFormProps {
 }
 
 const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
-  const [actividades, setActividades] = useState<any[]>([]);
+  const [tiposActividades, setTiposActividades] = useState<TipoActividad[]>([]);
+  const [actividades, setActividades] = useState<Actividad[]>([]);
   const [horarios, setHorarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,6 +70,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
   const [hasReadTerms, setHasReadTerms] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
+    tipoActividad: '',
     actividad: '',
     horarioId: '',
     cantidadPersonas: 1,
@@ -44,8 +79,17 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
   });
 
   useEffect(() => {
-    fetchActividades();
+    fetchTiposActividades();
   }, []);
+
+  useEffect(() => {
+    if (formData.tipoActividad) {
+      fetchActividadesByTipo(formData.tipoActividad);
+    } else {
+      setActividades([]);
+      setHorarios([]);
+    }
+  }, [formData.tipoActividad]);
 
   useEffect(() => {
     if (formData.actividad) {
@@ -55,27 +99,49 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
     }
   }, [formData.actividad]);
 
-  const fetchActividades = async () => {
+  const fetchTiposActividades = async () => {
     try {
-      const response = await fetch(`${API_URL}/actividades`);
+      const response = await fetch(`${API_URL}/actividades/tipos`);
       const result = await response.json();
-      console.log("actividades", result);
+      console.log("tipos de actividades", result);
+
+      if (result.success && result.data) {
+        setTiposActividades(result.data);
+      } else {
+        setError(result.message || 'Error al cargar tipos de actividades');
+      }
+    } catch (err) {
+      setError('Error al cargar tipos de actividades');
+      console.error(err);
+    }
+  };
+
+  const fetchActividadesByTipo = async (tipoId: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/actividades?tipoId=${tipoId}`);
+      const result = await response.json();
+      console.log("actividades por tipo", result);
 
       if (result.success && result.data) {
         setActividades(result.data);
       } else {
         setError(result.message || 'Error al cargar actividades');
+        setActividades([]);
       }
     } catch (err) {
       setError('Error al cargar actividades');
       console.error(err);
+      setActividades([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchHorarios = async (actividad: string) => {
+  const fetchHorarios = async (actividadId: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/actividades/${actividad}/horarios`);
+      const response = await fetch(`${API_URL}/actividades/${actividadId}/horarios`);
       const result = await response.json();
       console.log("horarios", result);
 
@@ -92,6 +158,16 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTipoActividadChange = (value: string) => {
+    setFormData({
+      ...formData,
+      tipoActividad: value,
+      actividad: '',
+      horarioId: '',
+      participantes: formData.participantes.map(p => ({ ...p, talla: '' }))
+    });
   };
 
   const handleActividadChange = (value: string) => {
@@ -123,6 +199,10 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
     setLoading(true);
 
     try {
+      if (!formData.tipoActividad) {
+        throw new Error('Debe seleccionar un tipo de actividad');
+      }
+
       if (!formData.actividad) {
         throw new Error('Debe seleccionar una actividad');
       }
@@ -135,7 +215,12 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
         throw new Error('Debe aceptar los términos y condiciones');
       }
 
-      const requiereTalle = ACTIVIDADES_CON_TALLE.includes(formData.actividad);
+      // Buscar la actividad seleccionada para verificar si requiere talla
+      const actividadSeleccionada = actividades.find(
+        act => act.id.toString() === formData.actividad
+      );
+      const requiereTalle = actividadSeleccionada?.requiere_talla === 1;
+
       for (let i = 0; i < formData.participantes.length; i++) {
         const p = formData.participantes[i];
         if (!p.nombre || !p.dni || !p.edad) {
@@ -149,7 +234,16 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
       const response = await fetch(`${API_URL}/inscripciones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          horarioId: formData.horarioId,
+          terminosAceptados: formData.terminosAceptados,
+          participantes: formData.participantes.map(p => ({
+            nombre: p.nombre,
+            dni: p.dni,
+            edad: parseInt(p.edad),
+            talla: p.talla || undefined
+          }))
+        })
       });
 
       const result = await response.json();
@@ -163,6 +257,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
       onSuccess(codigoReserva);
 
       setFormData({
+        tipoActividad: '',
         actividad: '',
         horarioId: '',
         cantidadPersonas: 1,
@@ -177,7 +272,11 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
     }
   };
 
-  const requiereTalle = ACTIVIDADES_CON_TALLE.includes(formData.actividad);
+  // Verificar si la actividad seleccionada requiere talla
+  const actividadSeleccionada = actividades.find(
+    act => act.id.toString() === formData.actividad
+  );
+  const requiereTalle = actividadSeleccionada?.requiere_talla === 1;
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -226,25 +325,87 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
 
               <div className="space-y-4">
                 <Select
-                  label="Actividad"
-                  placeholder="Seleccione una actividad"
+                  label="Tipo de Actividad"
+                  placeholder="Seleccione un tipo de actividad"
                   isRequired
-                  selectedKeys={formData.actividad ? [formData.actividad] : []}
+                  selectedKeys={formData.tipoActividad ? [formData.tipoActividad] : []}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
-                    handleActividadChange(selected);
+                    handleTipoActividadChange(selected);
                   }}
                   classNames={{
                     trigger: "bg-default-100 border-2 border-default-200 hover:bg-default-200",
                   }}
-                  startContent={<Calendar className="w-4 h-4 text-default-400" />}
+                  renderValue={(items) => {
+                    return items.map((item) => (
+                      <div key={item.key} className="flex items-center gap-2">
+                        <Avatar
+                          src={getActivityAvatar(item.textValue || '')}
+                          className="w-6 h-6"
+                          size="sm"
+                        />
+                        <span>{item.textValue}</span>
+                      </div>
+                    ));
+                  }}
+                  startContent={
+                    formData.tipoActividad ? (
+                      <Avatar
+                        src={getActivityAvatar(tiposActividades.find(t => t.id.toString() === formData.tipoActividad)?.nombre || '')}
+                        className="w-5 h-5"
+                        size="sm"
+                      />
+                    ) : (
+                      <Calendar className="w-4 h-4 text-default-400" />
+                    )
+                  }
                 >
-                  {actividades.map(act => (
-                    <SelectItem key={act.nombre.toUpperCase()}>
-                      {act.nombre}
+                  {tiposActividades.map(tipo => (
+                    <SelectItem
+                      key={tipo.id.toString()}
+                      textValue={tipo.nombre}
+                      startContent={
+                        <Avatar
+                          src={getActivityAvatar(tipo.nombre)}
+                          className="w-6 h-6"
+                          size="sm"
+                        />
+                      }
+                    >
+                      {tipo.nombre}
                     </SelectItem>
                   ))}
                 </Select>
+
+                {formData.tipoActividad && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Select
+                      label="Actividad"
+                      placeholder="Seleccione una actividad"
+                      isRequired
+                      isDisabled={loading || actividades.length === 0}
+                      selectedKeys={formData.actividad ? [formData.actividad] : []}
+                      onSelectionChange={(keys) => {
+                        const selected = Array.from(keys)[0] as string;
+                        handleActividadChange(selected);
+                      }}
+                      classNames={{
+                        trigger: "bg-default-100 border-2 border-default-200 hover:bg-default-200",
+                      }}
+                      description={actividades.length === 0 && !loading ? "No hay actividades disponibles para este tipo" : ""}
+                    >
+                      {actividades.map(act => (
+                        <SelectItem key={act.id.toString()}>
+                          {act.nombre}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </motion.div>
+                )}
 
                 {formData.actividad && (
                   <motion.div
@@ -268,7 +429,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
                       description={horarios.length === 0 && !loading ? "No hay horarios disponibles para esta actividad" : ""}
                     >
                       {horarios.map(h => (
-                        <SelectItem key={h.id}>
+                        <SelectItem key={h.id_horario.toString()}>
                           {new Date(h.fecha_inicio).toLocaleString('es-AR')} - Cupos: {h.cupos_disponibles}
                         </SelectItem>
                       ))}
