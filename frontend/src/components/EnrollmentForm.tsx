@@ -162,17 +162,22 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
       setError("");
     }
 
+    // Preservar todos los datos existentes
     const nuevosParticipantes = Array(cantidad)
       .fill(null)
-      .map(
-        (_, i) =>
-          formData.participantes[i] || {
-            nombre: "",
-            dni: "",
-            edad: "",
-            talla: "",
-          },
-      );
+      .map((_, i) => {
+        // Si ya existe un participante en esta posición, mantener TODOS sus datos
+        if (i < formData.participantes.length) {
+          return { ...formData.participantes[i] };
+        }
+        // Si es un nuevo participante, crear uno vacío
+        return {
+          nombre: "",
+          dni: "",
+          edad: "",
+          talla: "",
+        };
+      });
 
     setFormData({
       ...formData,
@@ -227,22 +232,31 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
 
       // Validar longitud del DNI
       if (p.dni.length < 7 || p.dni.length > 8) {
-        throw new Error(`El DNI del participante ${i + 1} debe tener entre 7 y 8 dígitos`);
+        throw new Error(
+          `El DNI del participante ${i + 1} debe tener entre 7 y 8 dígitos`,
+        );
       }
 
       // Validar nombre
       if (p.nombre.length < 3) {
-        throw new Error(`El nombre del participante ${i + 1} debe tener al menos 3 caracteres`);
+        throw new Error(
+          `El nombre del participante ${i + 1} debe tener al menos 3 caracteres`,
+        );
       }
 
       if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(p.nombre)) {
-        throw new Error(`El nombre del participante ${i + 1} solo puede contener letras`);
+        throw new Error(
+          `El nombre del participante ${i + 1} solo puede contener letras`,
+        );
       }
 
       // Validar edad
       const edad = parseInt(p.edad);
+
       if (isNaN(edad) || edad < 1 || edad > 120) {
-        throw new Error(`La edad del participante ${i + 1} debe estar entre 1 y 120 años`);
+        throw new Error(
+          `La edad del participante ${i + 1} debe estar entre 1 y 120 años`,
+        );
       }
 
       if (requiereTalle && !p.talla) {
@@ -321,13 +335,13 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
   const requiereTalle = actividadSeleccionada?.requiere_talla === 1;
 
   // Preparar datos para el modal de confirmación
-  const tipoActividadNombre = tiposActividades.find(
-    (t) => t.id.toString() === formData.tipoActividad,
-  )?.nombre || "";
+  const tipoActividadNombre =
+    tiposActividades.find((t) => t.id.toString() === formData.tipoActividad)
+      ?.nombre || "";
 
-  const actividadNombre = actividades.find(
-    (a) => a.id.toString() === formData.actividad,
-  )?.nombre || "";
+  const actividadNombre =
+    actividades.find((a) => a.id.toString() === formData.actividad)?.nombre ||
+    "";
 
   const horarioSeleccionado = horarios.find(
     (h) => h.id_horario.toString() === formData.horarioId,
@@ -345,6 +359,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
       hour: "2-digit",
       minute: "2-digit",
     });
+
     return { dateStr, timeStr };
   };
 
@@ -516,9 +531,9 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
 
       {confirmationData && (
         <ConfirmationModal
-          isOpen={confirmModalOpen}
           data={confirmationData}
           isLoading={loading}
+          isOpen={confirmModalOpen}
           onClose={() => setConfirmModalOpen(false)}
           onConfirm={handleConfirmSubmit}
         />
