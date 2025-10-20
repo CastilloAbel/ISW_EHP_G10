@@ -5,7 +5,10 @@ import jardineriaImg from "../assets/jardineria.png";
 import palestraImg from "../assets/palestra.png";
 
 // Función para obtener el avatar según el nombre o código de la actividad
-export const getActivityAvatar = (activityName: string, codigo?: string): string => {
+export const getActivityAvatar = (
+  activityName: string,
+  codigo?: string,
+): string => {
   const name = activityName.toLowerCase();
   const code = (codigo || "").toLowerCase();
 
@@ -14,6 +17,7 @@ export const getActivityAvatar = (activityName: string, codigo?: string): string
   if (code === "tirolesa" || name.includes("tirolesa")) return tirolesaImg;
   if (code === "jardineria" || name.includes("jardiner")) return jardineriaImg;
   if (code === "palestra" || name.includes("palestra")) return palestraImg;
+
   return ""; // default
 };
 
@@ -29,6 +33,6 @@ export const formatDateTime = (dateString: string) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+
   return { dateStr, timeStr };
 };
-
