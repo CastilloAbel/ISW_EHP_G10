@@ -1,8 +1,18 @@
+import type { TipoActividad, Actividad } from "@/types";
+
 import { motion } from "framer-motion";
-import { Select, SelectItem, Input, Card, CardBody, Avatar, Chip } from "@heroui/react";
+import {
+  Select,
+  SelectItem,
+  Input,
+  Card,
+  CardBody,
+  Avatar,
+  Chip,
+} from "@heroui/react";
 import { Calendar, Users, Clock, UserCheck, Shirt } from "lucide-react";
-import { getActivityAvatar, formatDateTime } from "../../utils/activityHelpers";
-import type { TipoActividad, Actividad } from "../../types";
+
+import { getActivityAvatar, formatDateTime } from "@/utils/activityHelpers.ts";
 
 interface ActivitySelectorProps {
   tiposActividades: TipoActividad[];
@@ -43,51 +53,57 @@ export const ActivitySelector = ({
 
         <div className="space-y-4">
           <Select
-            label="Tipo de Actividad"
-            placeholder="Seleccione un tipo de actividad"
             isRequired
-            selectedKeys={selectedTipoActividad ? [selectedTipoActividad] : []}
-            onSelectionChange={(keys) => {
-              const selected = Array.from(keys)[0] as string;
-              onTipoActividadChange(selected);
-            }}
             classNames={{
               trigger:
                 "bg-default-100 border-2 border-default-200 hover:bg-default-200 min-h-[60px]",
               value: "text-base",
             }}
+            label="Tipo de Actividad"
+            placeholder="Seleccione un tipo de actividad"
             renderValue={(items) => {
               return items.map((item) => {
                 const tipo = tiposActividades.find(
-                  (t) => t.id.toString() === item.key
+                  (t) => t.id.toString() === item.key,
                 );
+
                 return (
                   <div key={item.key} className="flex items-center gap-2">
                     <Avatar
-                      src={getActivityAvatar(tipo?.nombre || "", tipo?.codigo)}
                       className="w-6 h-6"
                       size="sm"
+                      src={getActivityAvatar(tipo?.nombre || "", tipo?.codigo)}
                     />
-                    <span className="font-semibold text-sm">{tipo?.nombre}</span>
+                    <span className="font-semibold text-sm">
+                      {tipo?.nombre}
+                    </span>
                   </div>
                 );
               });
+            }}
+            selectedKeys={selectedTipoActividad ? [selectedTipoActividad] : []}
+            onSelectionChange={(keys) => {
+              const selected = Array.from(keys)[0] as string;
+
+              onTipoActividadChange(selected);
             }}
           >
             {tiposActividades.map((tipo) => (
               <SelectItem
                 key={tipo.id.toString()}
-                textValue={tipo.nombre}
                 classNames={{ base: "py-3" }}
+                textValue={tipo.nombre}
               >
                 <div className="flex items-center gap-3">
                   <Avatar
-                    src={getActivityAvatar(tipo.nombre, tipo.codigo)}
                     className="w-10 h-10 flex-shrink-0"
                     size="md"
+                    src={getActivityAvatar(tipo.nombre, tipo.codigo)}
                   />
                   <div className="flex flex-col">
-                    <span className="font-semibold text-base">{tipo.nombre}</span>
+                    <span className="font-semibold text-base">
+                      {tipo.nombre}
+                    </span>
                     <span className="text-xs text-default-500">
                       {tipo.descripcion}
                     </span>
@@ -99,20 +115,12 @@ export const ActivitySelector = ({
 
           {selectedTipoActividad && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
+              initial={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
               <Select
-                label="Actividad"
-                placeholder="Seleccione una actividad"
                 isRequired
-                isDisabled={loading || actividades.length === 0}
-                selectedKeys={selectedActividad ? [selectedActividad] : []}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  onActividadChange(selected);
-                }}
                 classNames={{
                   trigger:
                     "bg-default-100 border-2 border-default-200 hover:bg-default-200 min-h-[60px]",
@@ -123,45 +131,64 @@ export const ActivitySelector = ({
                     ? "No hay actividades disponibles para este tipo"
                     : ""
                 }
+                isDisabled={loading || actividades.length === 0}
+                label="Actividad"
+                placeholder="Seleccione una actividad"
                 renderValue={(items) => {
                   return items.map((item) => {
-                    const act = actividades.find((a) => a.id.toString() === item.key);
+                    const act = actividades.find(
+                      (a) => a.id.toString() === item.key,
+                    );
+
                     return (
                       <div key={item.key} className="flex items-center gap-2">
                         <Avatar
-                          src={getActivityAvatar(
-                            act?.tipo_nombre || "",
-                            act?.tipo_codigo
-                          )}
                           className="w-6 h-6"
                           size="sm"
+                          src={getActivityAvatar(
+                            act?.tipo_nombre || "",
+                            act?.tipo_codigo,
+                          )}
                         />
-                        <span className="font-semibold text-sm">{act?.nombre}</span>
+                        <span className="font-semibold text-sm">
+                          {act?.nombre}
+                        </span>
                       </div>
                     );
                   });
+                }}
+                selectedKeys={selectedActividad ? [selectedActividad] : []}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+
+                  onActividadChange(selected);
                 }}
               >
                 {actividades.map((act) => (
                   <SelectItem
                     key={act.id.toString()}
-                    textValue={act.nombre}
                     classNames={{ base: "py-3" }}
+                    textValue={act.nombre}
                   >
                     <div className="flex items-start gap-3">
                       <Avatar
-                        src={getActivityAvatar(act.tipo_nombre, act.tipo_codigo)}
                         className="w-10 h-10 flex-shrink-0 mt-1"
                         size="md"
+                        src={getActivityAvatar(
+                          act.tipo_nombre,
+                          act.tipo_codigo,
+                        )}
                       />
                       <div className="flex flex-col flex-1">
-                        <span className="font-semibold text-base">{act.nombre}</span>
+                        <span className="font-semibold text-base">
+                          {act.nombre}
+                        </span>
                         <span className="text-xs text-default-500 mb-2">
                           {act.descripcion}
                         </span>
                         <div className="flex items-center gap-2">
                           {act.requiere_talla === 1 && (
-                            <Chip size="sm" variant="flat" color="warning">
+                            <Chip color="warning" size="sm" variant="flat">
                               <div className="flex items-center gap-1">
                                 <Shirt className="w-3 h-3" />
                                 Requiere talla
@@ -179,20 +206,12 @@ export const ActivitySelector = ({
 
           {selectedActividad && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
+              initial={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
               <Select
-                label="Horario"
-                placeholder="Seleccione un horario"
                 isRequired
-                isDisabled={loading || horarios.length === 0}
-                selectedKeys={selectedHorarioId ? [selectedHorarioId] : []}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  onHorarioChange(selected);
-                }}
                 classNames={{
                   trigger:
                     "bg-default-100 border-2 border-default-200 hover:bg-default-200 min-h-[60px]",
@@ -203,14 +222,23 @@ export const ActivitySelector = ({
                     ? "No hay horarios disponibles para esta actividad"
                     : ""
                 }
+                isDisabled={loading || horarios.length === 0}
+                label="Horario"
+                placeholder="Seleccione un horario"
                 renderValue={(items) => {
                   return items.map((item) => {
                     const horario = horarios.find(
-                      (h) => h.id_horario.toString() === item.key
+                      (h) => h.id_horario.toString() === item.key,
                     );
+
                     if (!horario) return null;
-                    const { dateStr, timeStr } = formatDateTime(horario.fecha_inicio);
-                    const { timeStr: timeEndStr } = formatDateTime(horario.fecha_fin);
+                    const { dateStr, timeStr } = formatDateTime(
+                      horario.fecha_inicio,
+                    );
+                    const { timeStr: timeEndStr } = formatDateTime(
+                      horario.fecha_fin,
+                    );
+
                     return (
                       <div key={item.key} className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
@@ -226,18 +254,25 @@ export const ActivitySelector = ({
                     );
                   });
                 }}
+                selectedKeys={selectedHorarioId ? [selectedHorarioId] : []}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+
+                  onHorarioChange(selected);
+                }}
               >
                 {horarios.map((h) => {
                   const { dateStr, timeStr } = formatDateTime(h.fecha_inicio);
                   const { timeStr: timeEndStr } = formatDateTime(h.fecha_fin);
                   const cuposOcupados = h.cupos_horario - h.cupos_disponibles;
-                  const porcentajeOcupado = (cuposOcupados / h.cupos_horario) * 100;
+                  const porcentajeOcupado =
+                    (cuposOcupados / h.cupos_horario) * 100;
 
                   return (
                     <SelectItem
                       key={h.id_horario.toString()}
-                      textValue={`${dateStr} ${timeStr}`}
                       classNames={{ base: "py-4" }}
+                      textValue={`${dateStr} ${timeStr}`}
                     >
                       <div className="flex items-start gap-3">
                         <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -260,8 +295,6 @@ export const ActivitySelector = ({
 
                           <div className="flex items-center gap-2 flex-wrap">
                             <Chip
-                              size="sm"
-                              variant="flat"
                               color={
                                 h.cupos_disponibles > 10
                                   ? "success"
@@ -269,14 +302,17 @@ export const ActivitySelector = ({
                                     ? "warning"
                                     : "danger"
                               }
+                              size="sm"
+                              variant="flat"
                             >
                               <div className="flex items-center gap-1">
                                 <Users className="w-3 h-3" />
-                                {h.cupos_disponibles}/{h.cupos_horario} disponibles
+                                {h.cupos_disponibles}/{h.cupos_horario}{" "}
+                                disponibles
                               </div>
                             </Chip>
 
-                            <Chip size="sm" variant="flat" color="primary">
+                            <Chip color="primary" size="sm" variant="flat">
                               <div className="flex items-center gap-1">
                                 <UserCheck className="w-3 h-3" />
                                 {h.cuidador_nombre}
@@ -306,23 +342,23 @@ export const ActivitySelector = ({
           )}
 
           <Input
-            type="number"
-            label="Cantidad de personas"
-            placeholder="1"
             isRequired
-            min="1"
-            max="10"
-            value={cantidadPersonas.toString()}
-            onValueChange={onCantidadChange}
             classNames={{
               inputWrapper:
                 "bg-default-100 border-2 border-default-200 hover:bg-default-200",
             }}
+            description="Máximo 20 participantes por inscripción"
+            label="Cantidad de personas"
+            max="20"
+            min="1"
+            placeholder="1"
             startContent={<Users className="w-4 h-4 text-default-400" />}
+            type="number"
+            value={cantidadPersonas.toString()}
+            onValueChange={onCantidadChange}
           />
         </div>
       </CardBody>
     </Card>
   );
 };
-

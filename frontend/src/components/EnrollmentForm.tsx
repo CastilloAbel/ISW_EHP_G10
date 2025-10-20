@@ -22,6 +22,8 @@ interface EnrollmentFormProps {
 }
 
 const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
+  const MAX_PARTICIPANTES = 20; // Límite máximo de participantes
+
   const [tiposActividades, setTiposActividades] = useState<TipoActividad[]>([]);
   const [actividades, setActividades] = useState<Actividad[]>([]);
   const [horarios, setHorarios] = useState<any[]>([]);
@@ -148,6 +150,18 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
 
   const handleCantidadChange = (value: string) => {
     const cantidad = parseInt(value) || 1;
+
+    // Validar que no exceda el máximo permitido
+    if (cantidad > MAX_PARTICIPANTES) {
+      setError(`El número máximo de participantes es ${MAX_PARTICIPANTES}`);
+      return;
+    }
+
+    // Limpiar error si había uno previo
+    if (error && error.includes("número máximo de participantes")) {
+      setError("");
+    }
+
     const nuevosParticipantes = Array(cantidad)
       .fill(null)
       .map(
@@ -412,17 +426,31 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
             <h3 className="text-lg font-semibold">
               Datos de los participantes
             </h3>
+            {formData.participantes.length > 5 && (
+              <span className="text-xs text-default-500 ml-auto">
+                {formData.participantes.length} participantes
+              </span>
+            )}
           </div>
 
-          {formData.participantes.map((p, index) => (
-            <ParticipantCard
-              key={index}
-              index={index}
-              participante={p}
-              requiereTalle={requiereTalle}
-              onParticipanteChange={handleParticipanteChange}
-            />
-          ))}
+          {/* Contenedor con scroll cuando hay más de 6 participantes */}
+          <div
+            className={
+              formData.participantes.length > 6
+                ? "max-h-[600px] overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+                : "space-y-4"
+            }
+          >
+            {formData.participantes.map((p, index) => (
+              <ParticipantCard
+                key={index}
+                index={index}
+                participante={p}
+                requiereTalle={requiereTalle}
+                onParticipanteChange={handleParticipanteChange}
+              />
+            ))}
+          </div>
         </motion.div>
 
         <motion.div variants={itemVariants}>
