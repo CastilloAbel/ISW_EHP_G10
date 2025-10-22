@@ -23,6 +23,12 @@ app.get('/api/health', (req, res) => {
   sendSuccess(res, { status: 'ok' }, 'EcoHarmony Park API is running');
 });
 
-app.listen(PORT, () => {
-  console.log(`🌳 EcoHarmony Park Server running on http://localhost:${PORT}`);
-});
+// Check test mode
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🌳 EcoHarmony Park Server running on http://localhost:${PORT}`);
+  });
+}
+
+// Export app for tests
+export default app;

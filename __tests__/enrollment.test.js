@@ -1,101 +1,352 @@
-import { inscribir } from '../src/enrollmentService.js';
+import request from 'supertest';
+import app from '../backend/server.js';
+import { queryOne, execute, queryAll } from '../backend/config/database.js';
 
 const ERROR_SIN_CUPO = 'Sin cupo disponible para el horario seleccionado';
 const ERROR_HORARIO = 'Horario no disponible';
 const ERROR_TYC = 'Debe aceptar términos y condiciones';
 const ERROR_TALLE = 'Falta talle de vestimenta';
 
-function makeCatalog() {
-  const data = new Map();
-  return {
-    withSlot(activity, id, habilitado, cupos) {
-      data.set(`${activity}:${id}`, { id, habilitado, cuposDisponibles: cupos });
-      return this;
-    },
-    build() { return this; },
-    findSlot(activity, horarioId) { return data.get(`${activity}:${horarioId}`) || null; },
-    getSlot(activity, horarioId) { return data.get(`${activity}:${horarioId}`) || null; },
-    setCupos(activity, horarioId, cupos) {
-      const slot = data.get(`${activity}:${horarioId}`);
-      if (slot) slot.cuposDisponibles = cupos;
+// Función para generar DNI único
+function generarDNI() {
+  return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+}
+
+/**
+ * Tests de integración para la funcionalidad de inscripción a actividades
+ * Estos tests utilizan el backend real y la base de datos SQLite
+ */
+describe('US: Inscribirme a actividad – Tests de Integración', () => {
+  let horarioTirolesa;
+  let horarioSafari;
+  let horarioPalestra;
+  let horarioJardineria;
+
+  beforeAll(async () => {
+    // Obtener horarios de prueba para cada actividad
+    // Buscamos horarios con cupos disponibles de cada tipo de actividad
+    
+    // Tirolesa (requiere talla)
+    const horariosTirolesa = await queryAll(`
+      SELECT h.* FROM Horarios h
+      INNER JOIN Actividades a ON h.id_actividad = a.id
+      INNER JOIN TiposActividades t ON a.tipo_id = t.id
+      WHERE t.codigo = 'TIROLESA' 
+        AND (h.cupos_horario - h.inscriptos_horario) > 0
+        AND h.fecha_fin > datetime('now')
+      LIMIT 1
+    `);
+    horarioTirolesa = horariosTirolesa[0];
+
+    // Safari (no requiere talla)
+    const horariosSafari = await queryAll(`
+      SELECT h.* FROM Horarios h
+      INNER JOIN Actividades a ON h.id_actividad = a.id
+      INNER JOIN TiposActividades t ON a.tipo_id = t.id
+      WHERE t.codigo = 'SAFARI' 
+        AND (h.cupos_horario - h.inscriptos_horario) > 0
+        AND h.fecha_fin > datetime('now')
+      LIMIT 1
+    `);
+    horarioSafari = horariosSafari[0];
+
+    // Palestra (requiere talla)
+    const horariosPalestra = await queryAll(`
+      SELECT h.* FROM Horarios h
+      INNER JOIN Actividades a ON h.id_actividad = a.id
+      INNER JOIN TiposActividades t ON a.tipo_id = t.id
+      WHERE t.codigo = 'PALESTRA' 
+        AND (h.cupos_horario - h.inscriptos_horario) > 0
+        AND h.fecha_fin > datetime('now')
+      LIMIT 1
+    `);
+    horarioPalestra = horariosPalestra[0];
+
+    // Jardinería (no requiere talla)
+    const horariosJardineria = await queryAll(`
+      SELECT h.* FROM Horarios h
+      INNER JOIN Actividades a ON h.id_actividad = a.id
+      INNER JOIN TiposActividades t ON a.tipo_id = t.id
+      WHERE t.codigo = 'JARDINERIA' 
+        AND (h.cupos_horario - h.inscriptos_horario) > 0
+        AND h.fecha_fin > datetime('now')
+      LIMIT 1
+    `);
+    horarioJardineria = horariosJardineria[0];
+  });
+
+  /**
+   * CP1: Probar inscribirse a una actividad del listado que poseen cupos disponibles,
+   * seleccionando un horario, ingresando los datos del visitante (nombre, DNI, edad,
+   * talla de la vestimenta si la actividad lo requiere) y aceptando los términos y
+   * condiciones (pasa)
+   */
+  test('CP1: Inscripción exitosa con talla (Tirolesa)', async () => {
+    if (!horarioTirolesa) {
+      console.warn('No hay horarios de Tirolesa disponibles, saltando test');
+      return;
     }
-  };
-}
 
-function defaultCatalog() {
-  return makeCatalog()
-    .withSlot('TIROLESA', 'H1', true, 5)
-    .withSlot('SAFARI', 'H2', true, 10)
-    .withSlot('PALESTRA', 'H3', false, 8)
-    .build();
-}
+    const cuposAntesQuery = await queryOne(
+      'SELECT cupos_horario, inscriptos_horario FROM Horarios WHERE id_horario = ?',
+      [horarioTirolesa.id_horario]
+    );
+    const cuposAntes = cuposAntesQuery.cupos_horario - cuposAntesQuery.inscriptos_horario;
 
-function p(nombre, dni, edad, talle) {
-  const obj = { nombre, dni, edad };
-  if (talle !== undefined) obj.talle = talle;
-  return obj;
-}
+    const solicitud = {
+      horarioId: horarioTirolesa.id_horario,
+      terminosAceptados: true,
+      participantes: [
+        {
+          nombre: 'Camila Test',
+          dni: generarDNI(),
+          edad: 25,
+          talla: 'M'
+        }
+      ]
+    };
 
-function req({ actividad, horarioId, participantes, terminosAceptados = true }) {
-  return { actividad, horarioId, participantes, terminosAceptados };
-}
+    const response = await request(app)
+      .post('/api/inscripciones')
+      .send(solicitud)
+      .expect(201);
 
-describe('US: Inscribirme a actividad – TDD (Jest)', () => {
-  let catalog;
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.codigoReserva).toBeDefined();
+    expect(response.body.data.cantidadParticipantes).toBe(1);
+    expect(response.body.data.inscripcionIds).toHaveLength(1);
 
-  beforeEach(() => {
-    catalog = defaultCatalog();
+    // Verificar que los cupos disminuyeron
+    const cuposDespuesQuery = await queryOne(
+      'SELECT cupos_horario, inscriptos_horario FROM Horarios WHERE id_horario = ?',
+      [horarioTirolesa.id_horario]
+    );
+    const cuposDespues = cuposDespuesQuery.cupos_horario - cuposDespuesQuery.inscriptos_horario;
+    expect(cuposDespues).toBe(cuposAntes - 1);
   });
 
-  test('CP1: éxito con datos válidos', () => {
-    const solicitud = req({
-      actividad: 'TIROLESA', horarioId: 'H1',
-      participantes: [ p('Cami', '123', 20, 'M') ], terminosAceptados: true
-    });
-    const res = inscribir(solicitud, catalog);
-    expect(res.ok).toBe(true);
-    expect(typeof res.codigoReserva).toBe('string');
-    expect(res.errores).toEqual([]);
-    expect(catalog.getSlot('TIROLESA', 'H1').cuposDisponibles).toBe(4);
+  /**
+   * CP2: Probar inscribirse a una actividad que no tiene cupo para el horario
+   * seleccionado (falla)
+   */
+  test('CP2: Falla cuando no hay cupos disponibles', async () => {
+    if (!horarioTirolesa) {
+      console.warn('No hay horarios de Tirolesa disponibles, saltando test');
+      return;
+    }
+
+    // Obtener cupos actuales
+    const horarioQuery = await queryOne(
+      'SELECT cupos_horario, inscriptos_horario FROM Horarios WHERE id_horario = ?',
+      [horarioTirolesa.id_horario]
+    );
+    const cuposDisponibles = horarioQuery.cupos_horario - horarioQuery.inscriptos_horario;
+
+    // Intentar inscribir más personas de las que hay cupos
+    const participantes = [];
+    for (let i = 0; i < cuposDisponibles + 1; i++) {
+      participantes.push({
+        nombre: `Persona ${i}`,
+        dni: `1000000${i}`,
+        edad: 25,
+        talla: 'M'
+      });
+    }
+
+    const solicitud = {
+      horarioId: horarioTirolesa.id_horario,
+      terminosAceptados: true,
+      participantes
+    };
+
+    const response = await request(app)
+      .post('/api/inscripciones')
+      .send(solicitud)
+      .expect(400);
+
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain(ERROR_SIN_CUPO);
   });
 
-  test('CP2: sin cupo disponible', () => {
-    catalog.setCupos('TIROLESA', 'H1', 0);
-    const solicitud = req({ actividad: 'TIROLESA', horarioId: 'H1',
-      participantes: [ p('Cami', '123', 20, 'M') ] });
-    const res = inscribir(solicitud, catalog);
-    expect(res.ok).toBe(false);
-    expect(res.errores).toContain(ERROR_SIN_CUPO);
+  /**
+   * CP3: Probar inscribirse a una actividad sin ingresar talle de vestimenta
+   * porque la actividad no lo requiere (pasa)
+   */
+  test('CP3: Inscripción exitosa sin talla cuando no es requerida (Safari)', async () => {
+    if (!horarioSafari) {
+      console.warn('No hay horarios de Safari disponibles, saltando test');
+      return;
+    }
+
+    const solicitud = {
+      horarioId: horarioSafari.id_horario,
+      terminosAceptados: true,
+      participantes: [
+        {
+          nombre: 'Alex Test',
+          dni: generarDNI(),
+          edad: 30
+          // Sin talla porque Safari no lo requiere
+        }
+      ]
+    };
+
+    const response = await request(app)
+      .post('/api/inscripciones')
+      .send(solicitud)
+      .expect(201);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.codigoReserva).toBeDefined();
+    expect(response.body.data.cantidadParticipantes).toBe(1);
   });
 
-  test('CP3: sin talle si la actividad no lo requiere', () => {
-    const solicitud = req({ actividad: 'SAFARI', horarioId: 'H2',
-      participantes: [ p('Alex', '1111', 25) ] });
-    const res = inscribir(solicitud, catalog);
-    expect(res.ok).toBe(true);
+  /**
+   * CP4: Probar inscribirse a una actividad seleccionando un horario en el cual
+   * el parque está cerrado o la actividad no está disponible (falla)
+   */
+  test('CP4: Falla con horario no disponible o inexistente', async () => {
+    const horarioInexistente = 999999;
+
+    const solicitud = {
+      horarioId: horarioInexistente,
+      terminosAceptados: true,
+      participantes: [
+        {
+          nombre: 'Test User',
+          dni: '11111111',
+          edad: 25,
+          talla: 'M'
+        }
+      ]
+    };
+
+    const response = await request(app)
+      .post('/api/inscripciones')
+      .send(solicitud)
+      .expect(404);
+
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain(ERROR_HORARIO);
   });
 
-  test('CP4: horario no disponible', () => {
-    const solicitud = req({ actividad: 'PALESTRA', horarioId: 'H3',
-      participantes: [ p('Cami', '123', 20, 'S') ] });
-    const res = inscribir(solicitud, catalog);
-    expect(res.ok).toBe(false);
-    expect(res.errores).toContain(ERROR_HORARIO);
+  /**
+   * CP5: Probar inscribirse a una actividad sin aceptar los términos y
+   * condiciones de la actividad (falla)
+   */
+  test('CP5: Falla sin aceptar términos y condiciones', async () => {
+    if (!horarioTirolesa) {
+      console.warn('No hay horarios de Tirolesa disponibles, saltando test');
+      return;
+    }
+
+    const solicitud = {
+      horarioId: horarioTirolesa.id_horario,
+      terminosAceptados: false, // No acepta términos
+      participantes: [
+        {
+          nombre: 'Test User',
+          dni: '22222222',
+          edad: 25,
+          talla: 'M'
+        }
+      ]
+    };
+
+    const response = await request(app)
+      .post('/api/inscripciones')
+      .send(solicitud)
+      .expect(400);
+
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain(ERROR_TYC);
   });
 
-  test('CP5: no acepta términos y condiciones', () => {
-    const solicitud = req({ actividad: 'TIROLESA', horarioId: 'H1',
-      participantes: [ p('Cami', '123', 20, 'M') ], terminosAceptados: false });
-    const res = inscribir(solicitud, catalog);
-    expect(res.ok).toBe(false);
-    expect(res.errores).toContain(ERROR_TYC);
+  /**
+   * CP6: Probar inscribirse a una actividad sin ingresar el talle de la
+   * vestimenta requerido por la actividad (falla)
+   */
+  test('CP6: Falla cuando falta talle en actividad que lo requiere (Tirolesa)', async () => {
+    if (!horarioTirolesa) {
+      console.warn('No hay horarios de Tirolesa disponibles, saltando test');
+      return;
+    }
+
+    const solicitud = {
+      horarioId: horarioTirolesa.id_horario,
+      terminosAceptados: true,
+      participantes: [
+        {
+          nombre: 'Test User',
+          dni: '33333333',
+          edad: 25
+          // Falta talla y Tirolesa lo requiere
+        }
+      ]
+    };
+
+    const response = await request(app)
+      .post('/api/inscripciones')
+      .send(solicitud)
+      .expect(400);
+
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain(ERROR_TALLE);
   });
 
-  test('CP6: falta talle en actividad que lo requiere', () => {
-    const solicitud = req({ actividad: 'TIROLESA', horarioId: 'H1',
-      participantes: [ p('Cami', '123', 20) ], terminosAceptados: true });
-    const res = inscribir(solicitud, catalog);
-    expect(res.ok).toBe(false);
-    expect(res.errores).toContain(ERROR_TALLE);
+  /**
+   * CP Extra: Inscripción múltiple con varios participantes
+   */
+  test('CP Extra: Inscripción exitosa con múltiples participantes', async () => {
+    if (!horarioSafari) {
+      console.warn('No hay horarios de Safari disponibles, saltando test');
+      return;
+    }
+
+    const cuposAntesQuery = await queryOne(
+      'SELECT cupos_horario, inscriptos_horario FROM Horarios WHERE id_horario = ?',
+      [horarioSafari.id_horario]
+    );
+    const cuposAntes = cuposAntesQuery.cupos_horario - cuposAntesQuery.inscriptos_horario;
+
+    const solicitud = {
+      horarioId: horarioSafari.id_horario,
+      terminosAceptados: true,
+      participantes: [
+        {
+          nombre: 'Participante 1',
+          dni: generarDNI(),
+          edad: 28
+        },
+        {
+          nombre: 'Participante 2',
+          dni: generarDNI(),
+          edad: 32
+        },
+        {
+          nombre: 'Participante 3',
+          dni: generarDNI(),
+          edad: 25
+        }
+      ]
+    };
+
+    const response = await request(app)
+      .post('/api/inscripciones')
+      .send(solicitud)
+      .expect(201);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.cantidadParticipantes).toBe(3);
+    expect(response.body.data.inscripcionIds).toHaveLength(3);
+
+    // Verificar que los cupos disminuyeron en 3
+    const cuposDespuesQuery = await queryOne(
+      'SELECT cupos_horario, inscriptos_horario FROM Horarios WHERE id_horario = ?',
+      [horarioSafari.id_horario]
+    );
+    const cuposDespues = cuposDespuesQuery.cupos_horario - cuposDespuesQuery.inscriptos_horario;
+    expect(cuposDespues).toBe(cuposAntes - 3);
   });
 });
+
