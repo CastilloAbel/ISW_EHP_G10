@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Trees, Sparkles } from "lucide-react";
 
 import EnrollmentForm from "./components/EnrollmentForm";
 import SuccessModal from "./components/SuccessModal";
+import logo from "./assets/logo.png";
 
 function App() {
   const [showSuccess, setShowSuccess] = useState(false);
@@ -49,52 +49,65 @@ function App() {
       {/* Header */}
       <motion.header
         animate="visible"
-        className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-xl"
+        className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-2xl relative overflow-hidden"
         initial="hidden"
         variants={headerVariants}
       >
-        <div className="container mx-auto px-4 py-8">
-          <motion.div className="text-center" variants={titleVariants}>
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <motion.div
-                animate={{
-                  rotate: [0, 10, -10, 10, 0],
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3,
-                }}
-              >
-                <Trees className="w-10 h-10" />
-              </motion.div>
-              <h1 className="text-4xl md:text-5xl font-bold">
-                EcoHarmony Park
-              </h1>
-              <motion.div
-                animate={{
-                  rotate: [0, -10, 10, -10, 0],
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3,
-                  delay: 0.5,
-                }}
-              >
-                <Sparkles className="w-8 h-8" />
-              </motion.div>
-            </div>
-            <motion.p
-              animate={{ opacity: 1 }}
-              className="text-xl text-green-100"
-              initial={{ opacity: 0 }}
-              transition={{ delay: 0.5 }}
+        {/* Decorative background patterns */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"></div>
+        </div>
+
+        <div className="container mx-auto px-4 py-6 md:py-10 relative z-10">
+          <motion.div
+            className="flex flex-col md:flex-row items-center justify-center gap-6"
+            variants={titleVariants}
+          >
+            {/* Logo */}
+            <motion.div
+              animate={{
+                y: [0, -8, 0],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="flex-shrink-0"
             >
-              Tu aventura comienza aquí
-            </motion.p>
+              <img
+                src={logo}
+                alt="EcoHarmony Park Logo"
+                className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 object-contain drop-shadow-2xl"
+              />
+            </motion.div>
+
+            {/* Title and Tagline */}
+            <div className="text-center md:text-left">
+              <motion.h1
+                className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 tracking-tight"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                EcoHarmony Park
+              </motion.h1>
+              <motion.p
+                animate={{ opacity: 1 }}
+                className="text-lg md:text-xl lg:text-2xl text-green-50 font-light"
+                initial={{ opacity: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                Tu aventura comienza aquí
+              </motion.p>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.7, duration: 0.8 }}
+                className="mt-3 h-1 bg-white/30 rounded-full max-w-md mx-auto md:mx-0"
+              ></motion.div>
+            </div>
           </motion.div>
         </div>
       </motion.header>

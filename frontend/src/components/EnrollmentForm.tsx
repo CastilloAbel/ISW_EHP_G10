@@ -1,9 +1,4 @@
-import type {
-  Participante,
-  TipoActividad,
-  Actividad,
-  FormData,
-} from "../types";
+import type { Participante, TipoActividad, Actividad, FormData } from "@/types";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -154,6 +149,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
     // Validar que no exceda el máximo permitido
     if (cantidad > MAX_PARTICIPANTES) {
       setError(`El número máximo de participantes es ${MAX_PARTICIPANTES}`);
+
       return;
     }
 
@@ -170,6 +166,7 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
         if (i < formData.participantes.length) {
           return { ...formData.participantes[i] };
         }
+
         // Si es un nuevo participante, crear uno vacío
         return {
           nombre: "",
