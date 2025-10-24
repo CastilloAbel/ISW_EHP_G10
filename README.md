@@ -26,19 +26,29 @@ Sistema desarrollado con arquitectura cliente-servidor que permite a los visitan
 ├── backend/              # Servidor Express
 │   ├── config/          # Configuración de BD
 │   ├── routes/          # Rutas API
+│   ├── controllers/     # Controladores
+│   ├── services/        # Servicios
+│   ├── repositories/    # Repositorios
+│   ├── utils/           # Funciones auxiliares
 │   ├── server.js        # Punto de entrada
+│   ├── EHP_database.db  # Base de datos SQLite
 │   └── package.json
 ├── frontend/            # Aplicación React
 │   ├── src/
+│   │   ├── assets/      # Imagenes que se usan
 │   │   ├── components/  # Componentes React
-│   │   ├── App.jsx
-│   │   └── App.css
+│   │   ├── config/      # Componentes React
+│   │   ├── styles/      # Componentes React
+│   │   ├── types/       # Componentes React
+│   │   ├── utils/       # Componentes React
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   │   └── provider.tsx
 │   └── package.json
 ├── src/                 # Lógica de negocio TDD
 │   └── enrollmentService.js
 ├── __tests__/           # Tests Jest
 │   └── enrollment.test.js
-├── EHP_database.db      # Base de datos SQLite
 └── package.json         # Scripts raíz
 ```
 
@@ -148,39 +158,72 @@ curl http://localhost:3000/api/health
 
 ### Tabla: Actividades
 ```sql
-CREATE TABLE Actividades (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nombre VARCHAR(255),
-  cupos INTEGER,
-  requiere_talla TINYINT(1),
-  fecha_inicio DATETIME,
-  fecha_fin DATETIME,
-  inscriptos INTEGER
-)
+CREATE TABLE "Actividades" (
+	"id"	INTEGER,
+	"tipo_id"	INTEGER NOT NULL,
+	"nombre"	VARCHAR(255) NOT NULL,
+	"descripcion"	TEXT,
+	"requiere_talla"	TINYINT(1) DEFAULT 0,
+	"cupos"	INTEGER NOT NULL CHECK("cupos" > 0),
+	PRIMARY KEY("id" AUTOINCREMENT),
+	CONSTRAINT "fk_actividades_tipo" FOREIGN KEY("tipo_id") REFERENCES "TiposActividades"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
 ```
 
 ### Tabla: Visitantes
 ```sql
-CREATE TABLE Visitantes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nombre VARCHAR(255),
-  dni INTEGER,
-  edad INTEGER,
-  talla_vestimenta VARCHAR(255)
-)
+CREATE TABLE "Visitantes" (
+	"id"	INTEGER,
+	"nombre"	VARCHAR(255) NOT NULL,
+	"dni"	INTEGER NOT NULL UNIQUE,
+	"edad"	INTEGER NOT NULL CHECK("edad" > 0),
+	"talla_vestimenta"	VARCHAR(10),
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
 ```
 
-### Tabla: Inscripcion
+### Tabla: Inscripciones
 ```sql
-CREATE TABLE Inscripcion (
-  id_inscripcion INTEGER PRIMARY KEY AUTOINCREMENT,
-  id_visitante INTEGER,
-  id_actividad INTEGER,
-  terminos_condicion TINYINT(1),
-  fecha_inscripcion DATETIME
-)
+CREATE TABLE "Inscripciones" (
+	"id_inscripcion"	INTEGER,
+	"id_visitante"	INTEGER NOT NULL,
+	"id_horario"	INTEGER NOT NULL,
+	"terminos_condicion"	TINYINT(1) NOT NULL DEFAULT 0,
+	"cantidad_personas"	INTEGER NOT NULL DEFAULT 1 CHECK("cantidad_personas" > 0),
+	"fecha_inscripcion"	DATETIME DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY("id_inscripcion" AUTOINCREMENT),
+	UNIQUE("id_visitante","id_horario"),
+	CONSTRAINT "fk_insc_horario" FOREIGN KEY("id_horario") REFERENCES "Horarios"("id_horario") ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT "fk_insc_visitante" FOREIGN KEY("id_visitante") REFERENCES "Visitantes"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
 ```
 
+### Tabla: TiposActividades
+```sql
+CREATE TABLE "TiposActividades" (
+	"id"	INTEGER,
+	"codigo"	VARCHAR(50) NOT NULL UNIQUE,
+	"nombre"	VARCHAR(100) NOT NULL UNIQUE,
+	"descripcion"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+```
+
+### Tabla: Horarios
+```sql
+CREATE TABLE "Horarios" (
+	"id_horario"	INTEGER,
+	"id_actividad"	INTEGER NOT NULL,
+	"fecha_inicio"	DATETIME NOT NULL,
+	"fecha_fin"	DATETIME NOT NULL,
+	"cuidador_nombre"	VARCHAR(255),
+	"cupos_horario"	INTEGER NOT NULL CHECK("cupos_horario" > 0),
+	"inscriptos_horario"	INTEGER DEFAULT 0 CHECK("inscriptos_horario" >= 0),
+	PRIMARY KEY("id_horario" AUTOINCREMENT),
+	CONSTRAINT "fk_horarios_actividad" FOREIGN KEY("id_actividad") REFERENCES "Actividades"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+	CHECK("fecha_fin" > "fecha_inicio")
+);
+```
 ## 🔌 API Endpoints
 
 ### Actividades
