@@ -63,8 +63,6 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
       const response = await fetch(`${API_URL}/actividades/tipos`);
       const result = await response.json();
 
-      console.log("tipos de actividades", result);
-
       if (result.success && result.data) {
         setTiposActividades(result.data);
       } else {
@@ -81,8 +79,6 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
       setLoading(true);
       const response = await fetch(`${API_URL}/actividades?tipoId=${tipoId}`);
       const result = await response.json();
-
-      console.log("actividades por tipo", result);
 
       if (result.success && result.data) {
         setActividades(result.data);
@@ -106,8 +102,6 @@ const EnrollmentForm = ({ onSuccess }: EnrollmentFormProps) => {
         `${API_URL}/actividades/${actividadId}/horarios`,
       );
       const result = await response.json();
-
-      console.log("horarios", result);
 
       if (result.success && result.data) {
         setHorarios(result.data);
