@@ -209,6 +209,16 @@ CREATE TABLE "TiposActividades" (
 );
 ```
 
+**Tipos predefinidos en el sistema:**
+
+| ID | Código | Nombre | Descripción |
+|----|---------|---------|-------------|
+| 1 | TIROLESA | Tirolesa | Actividades de tirolesa y canopy, usualmente requieren equipo y talla. |
+| 2 | SAFARI | Safari | Recorridos guiados para observación de fauna y fotografía. |
+| 3 | PALESTRA | Palestra | Actividades de escalada y muro de desafío; puede requerir equipo/talla. |
+| 4 | JARDINERIA | Jardinería | Talleres y actividades de jardinería y educación ambiental. |
+
+
 ### Tabla: Horarios
 ```sql
 CREATE TABLE "Horarios" (
@@ -226,11 +236,76 @@ CREATE TABLE "Horarios" (
 ```
 ## 🔌 API Endpoints
 
+### Tipos de Actividades
+
+- `GET /api/actividades/tipos` - Obtener todos los tipos de actividades
+
+**Ejemplo de Response:**
+```json
+{
+  "ok": true,
+  "data": [
+    {
+      "id": 1,
+      "codigo": "TIROLESA",
+      "nombre": "Tirolesa",
+      "descripcion": "Actividades de tirolesa y canopy, usualmente requieren equipo y talla."
+    },
+    {
+      "id": 2,
+      "codigo": "SAFARI",
+      "nombre": "Safari",
+      "descripcion": "Recorridos guiados para observación de fauna y fotografía."
+    },
+    {
+      "id": 3,
+      "codigo": "PALESTRA",
+      "nombre": "Palestra",
+      "descripcion": "Actividades de escalada y muro de desafío; puede requerir equipo/talla."
+    },
+    {
+      "id": 4,
+      "codigo": "JARDINERIA",
+      "nombre": "Jardinería",
+      "descripcion": "Talleres y actividades de jardinería y educación ambiental."
+    }
+  ],
+  "mensaje": "Tipos de actividades obtenidos exitosamente"
+}
+```
+
 ### Actividades
 
 - `GET /api/actividades` - Listar todas las actividades
-- `GET /api/actividades/:nombre/horarios` - Obtener horarios disponibles
-- `GET /api/actividades/:nombre/horarios/:id` - Obtener detalle de horario
+- `GET /api/actividades?tipoId={id}` - Listar actividades filtradas por tipo (solo actividades no finalizadas)
+- `GET /api/actividades/:id/horarios` - Obtener horarios disponibles de una actividad específica
+- `GET /api/actividades/tipos/:tipoId/horarios` - Obtener horarios disponibles por tipo de actividad (solo horarios no finalizados)
+- `GET /api/actividades/horarios/:id` - Obtener detalle de un horario específico
+
+**Ejemplo de Request (filtrar por tipo):**
+```
+GET /api/actividades?tipoId=1
+```
+
+**Ejemplo de Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Tirolesa Express",
+      "descripcion": "Recorrido rápido por las alturas",
+      "requiere_talla": 1,
+      "cupos": 50,
+      "tipo_id": 1,
+      "tipo_nombre": "Tirolesa",
+      "tipo_codigo": "TIROLESA"
+    }
+  ],
+  "mensaje": "Actividades obtenidas exitosamente"
+}
+```
 
 ### Inscripciones
 
@@ -256,10 +331,16 @@ CREATE TABLE "Horarios" (
 **Ejemplo de Response:**
 ```json
 {
-  "ok": true,
-  "codigoReserva": "TIR-1-123-ABC1234",
-  "inscripcionIds": [1],
-  "mensaje": "Inscripción realizada con éxito"
+  "success": true,
+  "data": {
+    "codigoReserva": "TIR-1-147-XNOXMH5DM3IH",
+    "inscripcionIds": [
+      147
+    ],
+    "cantidadParticipantes": 1
+  },
+  "message": "Inscripción realizada con éxito",
+  "error": null
 }
 ```
 
@@ -280,16 +361,6 @@ El proyecto sigue las convenciones definidas en `Documento_Estilo_Código.md`:
 - Arrow functions cuando sea posible
 - Componentes funcionales con Hooks
 - Diseño responsive con Flexbox
-
-## 🎨 Paleta de Colores
-
-```css
---primary-color: #2d6a4f    /* Verde principal */
---primary-dark: #1b4332     /* Verde oscuro */
---primary-light: #40916c    /* Verde claro */
---secondary-color: #52b788  /* Verde secundario */
---accent-color: #95d5b2     /* Acento */
-```
 
 ## 👥 Equipo de Desarrollo
 
