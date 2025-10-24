@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 
 import EnrollmentForm from "./components/EnrollmentForm";
 import SuccessModal from "./components/SuccessModal";
+import { AnimatedThemeToggler } from "./components/AnimatedThemeToggler";
 import logo from "./assets/logo.png";
 
 function App() {
@@ -45,11 +46,11 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-slate-900 transition-colors duration-300">
       {/* Header */}
       <motion.header
         animate="visible"
-        className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-2xl relative overflow-hidden"
+        className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-800 dark:via-emerald-800 dark:to-teal-900 text-white shadow-2xl relative overflow-hidden"
         initial="hidden"
         variants={headerVariants}
       >
@@ -60,6 +61,10 @@ function App() {
         </div>
 
         <div className="container mx-auto px-4 py-6 md:py-10 relative z-10">
+          <div className="absolute top-4 right-4 md:top-6 md:right-8">
+            <AnimatedThemeToggler className="p-3 md:p-4" />
+          </div>
+
           <motion.div
             className="flex flex-col md:flex-row items-center justify-center gap-6"
             variants={titleVariants}
@@ -120,13 +125,13 @@ function App() {
           transition={{ delay: 0.3, duration: 0.6 }}
         >
           <section className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">
               Inscripción a Actividades
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Completa el formulario para reservar tu lugar en nuestras
               emocionantes actividades.
-              <span className="text-green-600 font-semibold">
+              <span className="text-green-600 dark:text-green-400 font-semibold">
                 {" "}
                 ¡La naturaleza te espera!
               </span>
